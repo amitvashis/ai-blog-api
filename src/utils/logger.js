@@ -1,58 +1,52 @@
 /**
- * Application logger configuration
- * Using pino for structured JSON logging
+ * Logger utility for application-wide logging
  */
-const pino = require('pino');
+const winston = require('winston');
 const config = require('../config');
 
-// Define log levels
-const levels = {
-  fatal: 60,
-  error: 50,
-  warn: 40,
-  info: 30,
-  debug: 20,
-  trace: 10,
-};
+const enumerateErrorFormat = winston.format((info) => {
+  if (info instanceof Error) {
+    Object.assign(info, { message: info.message, stack: info.stack });
+  }
+  return info;
+});
 
-// Configure base logger options
-const options = {
-  level: config.logLevel || 'info',
-  timestamp: pino.stdTimeFunctions.isoTime,
-  formatters: {
-    level: (label) => {
-      return { level: label };
-    },
-  },
-  // Redact sensitive information from logs
-  redact: {
-    paths: [
-      'password',
-      'token',
-      'authorization',
-      'req.headers.authorization',
-      '*.password',
-      '*.token',
-      'req.body.password',
-    ],
-    censor: '[REDACTED]',
-  },
-};
+const logger = winston.createLogger({
+  level: config.env === 'development' ? 'debug' : 'info',
+  format: winston.format.combine(
+    enumerateErrorFormat(),
+    config.env === 'development' 
+      ? winston.format.colorize() 
+      : winston.format.uncolorize(),
+    winston.format.splat(),
+    winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    winston.format.printf(({ level, message, timestamp, ...meta }) => {
+      return `${timestamp} [${level}]: ${message} ${
+        Object.keys(meta).length ? JSON.stringify(meta, null, 2) : ''
+      }`;
+    })
+  ),
+  transports: [
+    new winston.transports.Console({
+      stderrLevels: ['error'],
+    }),
+    // Add file transport in production
+    ...(config.env === 'production'
+      ? [
+          new winston.transports.File({
+            filename: 'logs/error.log',
+            level: 'error',
+            maxsize: 10485760, // 10MB
+            maxFiles: 5,
+          }),
+          new winston.transports.File({
+            filename: 'logs/combined.log',
+            maxsize: 10485760, // 10MB
+            maxFiles: 5,
+          }),
+        ]
+      : []),
+  ],
+});
 
-// For development, make logs more readable
-if (config.nodeEnv !== 'production') {
-  options.transport = {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:standard',
-      ignore: 'pid,hostname',
-    },
-  };
-}
-
-// Create the logger instance
-const logger = pino(options);
-
-// Export the logger
 module.exports = logger;

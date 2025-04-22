@@ -1,67 +1,47 @@
 {
   "name": "ai-blog-api",
   "version": "1.0.0",
-  "description": "RESTful API for AI-powered blog website using Node.js, Express, and MongoDB",
-  "main": "src/server.js",
+  "description": "RESTful API for AI-powered blog website",
+  "main": "src/index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "dev": "nodemon src/server.js",
-    "test": "jest --coverage",
-    "lint": "eslint src/**/*.js",
-    "format": "prettier --write \"src/**/*.js\"",
-    "docs": "swagger-autogen -o ./src/swagger.json ./src/server.js",
-    "prepare": "husky install"
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "jest",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "docs": "swagger-jsdoc -d swaggerDef.js -o swagger.json"
   },
-  "keywords": [
-    "api",
-    "blog",
-    "ai",
-    "express",
-    "mongodb",
-    "node"
-  ],
-  "author": "",
-  "license": "MIT",
   "dependencies": {
-    "axios": "^1.5.0",
     "bcryptjs": "^2.4.3",
     "compression": "^1.7.4",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "express-rate-limit": "^7.0.1",
-    "express-validator": "^7.0.1",
+    "express-rate-limit": "^6.9.0",
     "helmet": "^7.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.5.2",
+    "http-status": "^1.6.2",
+    "joi": "^17.9.2",
+    "jsonwebtoken": "^9.0.1",
+    "mongoose": "^7.4.3",
     "node-cron": "^3.0.2",
-    "openai": "^4.10.0",
-    "pino": "^8.15.1",
-    "pino-http": "^8.5.0",
-    "pino-pretty": "^10.2.0",
+    "nodemailer": "^6.9.4",
+    "openai": "^4.0.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.0"
+    "swagger-ui-express": "^5.0.0",
+    "winston": "^3.10.0",
+    "xss-clean": "^0.1.4"
   },
   "devDependencies": {
-    "eslint": "^8.49.0",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-jest": "^27.4.0",
-    "eslint-plugin-node": "^11.1.0",
-    "husky": "^8.0.3",
-    "jest": "^29.7.0",
-    "lint-staged": "^14.0.1",
-    "mockingoose": "^2.16.2",
+    "eslint": "^8.47.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.28.0",
+    "jest": "^29.6.2",
     "nodemon": "^3.0.1",
-    "prettier": "^3.0.3",
     "supertest": "^6.3.3"
   },
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=14.0.0"
   },
-  "lint-staged": {
-    "src/**/*.js": [
-      "eslint --fix",
-      "prettier --write"
-    ]
-  }
+  "author": "",
+  "license": "ISC"
 }

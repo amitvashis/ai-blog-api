@@ -10,20 +10,10 @@ const envVarsSchema = Joi.object()
     PORT: Joi.number().default(3000),
     MONGODB_URL: Joi.string().required().description('MongoDB connection URL'),
     JWT_SECRET: Joi.string().required().description('JWT secret key'),
-    JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('Minutes after which access tokens expire'),
-    JWT_REFRESH_EXPIRATION_DAYS: Joi.number().default(30).description('Days after which refresh tokens expire'),
-    JWT_RESET_PASSWORD_EXPIRATION_MINUTES: Joi.number()
-      .default(10)
-      .description('Minutes after which reset password token expires'),
-    JWT_VERIFY_EMAIL_EXPIRATION_MINUTES: Joi.number()
-      .default(10)
-      .description('Minutes after which verify email token expires'),
-    SMTP_HOST: Joi.string().description('SMTP host for sending emails'),
-    SMTP_PORT: Joi.number().description('SMTP port for sending emails'),
-    SMTP_USERNAME: Joi.string().description('SMTP username for sending emails'),
-    SMTP_PASSWORD: Joi.string().description('SMTP password for sending emails'),
-    EMAIL_FROM: Joi.string().description('Email sender address'),
-    OPENAI_API_KEY: Joi.string().description('OpenAI API key for content generation'),
+    JWT_ACCESS_EXPIRATION_MINUTES: Joi.number().default(30).description('minutes after which access tokens expire'),
+    JWT_REFRESH_EXPIRATION_DAYS: Joi.number().default(30).description('days after which refresh tokens expire'),
+    LOG_LEVEL: Joi.string().valid('error', 'warn', 'info', 'http', 'debug').default('info'),
+    OPENAI_API_KEY: Joi.string().required().description('OpenAI API key for content generation'),
   })
   .unknown();
 
@@ -47,20 +37,8 @@ module.exports = {
     secret: envVars.JWT_SECRET,
     accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
     refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
-    resetPasswordExpirationMinutes: envVars.JWT_RESET_PASSWORD_EXPIRATION_MINUTES,
-    verifyEmailExpirationMinutes: envVars.JWT_VERIFY_EMAIL_EXPIRATION_MINUTES,
   },
-  email: {
-    smtp: {
-      host: envVars.SMTP_HOST,
-      port: envVars.SMTP_PORT,
-      auth: {
-        user: envVars.SMTP_USERNAME,
-        pass: envVars.SMTP_PASSWORD,
-      },
-    },
-    from: envVars.EMAIL_FROM,
-  },
+  logLevel: envVars.LOG_LEVEL,
   openai: {
     apiKey: envVars.OPENAI_API_KEY,
   },

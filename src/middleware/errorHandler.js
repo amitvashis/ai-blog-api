@@ -1,86 +1,79 @@
 /**
- * Global error handling middleware
+ * Centralized error handling middleware
  */
 const logger = require('../utils/logger');
+const config = require('../config');
 
 /**
- * Custom API error class
+ * Custom API Error class
  */
 class ApiError extends Error {
-  constructor(statusCode, message, isOperational = true) {
+  constructor(statusCode, message, isOperational = true, stack = '') {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
     
-    // Capture stack trace
-    Error.captureStackTrace(this, this.constructor);
+    if (stack) {
+      this.stack = stack;
+    } else {
+      Error.captureStackTrace(this, this.constructor);
+    }
   }
 }
 
 /**
- * Global error handler middleware
+ * Convert various error types to ApiError
  */
-const errorHandler = (err, req, res, next) => {
-  // Default to 500 if statusCode not set
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+const convertError = (err) => {
+  let error = err;
   
-  // For operational errors, we return details to the client
-  // For programming or other unknown errors, we return a generic message
-  const responseMessage = 
-    statusCode >= 500 && !err.isOperational
-      ? 'Internal Server Error'
-      : message;
-  
-  // Log all errors
-  if (statusCode >= 500) {
-    logger.error({
-      err,
-      stack: err.stack,
-      statusCode,
-      method: req.method,
-      path: req.path,
-      body: req.body,
-      params: req.params,
-      query: req.query,
-    }, 'Error occurred');
-  } else {
-    logger.warn({
-      err,
-      statusCode,
-      method: req.method,
-      path: req.path,
-    }, 'Client error occurred');
+  if (!(error instanceof ApiError)) {
+    const statusCode = error.statusCode || 500;
+    const message = error.message || 'Internal Server Error';
+    const isOperational = false;
+    
+    error = new ApiError(statusCode, message, isOperational, err.stack);
   }
   
-  // Send response
-  res.status(statusCode).json({
-    error: {
-      status: statusCode,
-      message: responseMessage,
-    },
-  });
+  return error;
 };
 
 /**
- * Handle uncaught exceptions and unhandled rejections
+ * Handle errors and send appropriate response
  */
-const setupUncaughtHandlers = () => {
-  // Uncaught exceptions
-  process.on('uncaughtException', (error) => {
-    logger.fatal({ err: error, stack: error.stack }, 'Uncaught Exception');
-    process.exit(1);
+const errorHandler = (err, req, res, next) => {
+  const error = convertError(err);
+  
+  // Log error details
+  logger.error(`[${req.method}] ${req.path} >> StatusCode:: ${error.statusCode}, Message:: ${error.message}`, {
+    stack: error.stack,
+    isOperational: error.isOperational,
   });
   
-  // Unhandled promise rejections
-  process.on('unhandledRejection', (reason, promise) => {
-    logger.fatal({ err: reason, stack: reason.stack }, 'Unhandled Promise Rejection');
-    process.exit(1);
-  });
+  // Send error response
+  const response = {
+    status: 'error',
+    message: error.message,
+  };
+  
+  // Include stack trace in development mode
+  if (config.env === 'development' && !error.isOperational) {
+    response.stack = error.stack;
+  }
+  
+  res.status(error.statusCode).json(response);
 };
 
-// Call setup immediately when imported
-setupUncaughtHandlers();
+/**
+ * Handle 404 errors for undefined routes
+ */
+const notFoundHandler = (req, res, next) => {
+  const error = new ApiError(404, `Not found - ${req.originalUrl}`);
+  next(error);
+};
 
-module.exports = errorHandler;
-module.exports.ApiError = ApiError;
+module.exports = {
+  ApiError,
+  errorHandler,
+  notFoundHandler,
+};
